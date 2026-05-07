@@ -1,4 +1,3 @@
-from decimal import Decimal
 from typing import Dict, List
 from app.entities.interfaces.singleton import Singleton
 from app.entities.models.events import Events
@@ -18,7 +17,6 @@ class MetricsManager(metaclass=Singleton):
             grouped_events[event_type].append(event)
 
         return grouped_events
-    
 
     def calculate_metrics(self, events: List[Events]):
         if not events or len(events) == 0:
@@ -27,7 +25,7 @@ class MetricsManager(metaclass=Singleton):
                 purchases=0,
                 unique_users=0,
                 conversion_rate=0,
-                top_products=[]
+                top_products=[],
             )
 
         grouped_events = self.group_by_event_type(events)
@@ -44,14 +42,14 @@ class MetricsManager(metaclass=Singleton):
                     total_revenue += float(event.price)
                     if event.user_id:
                         users_who_purchased.add(event.user_id)
-                    
+
                     if event.product_id not in dict_products:
                         dict_products[event.product_id] = ProductPopularity(
                             product_id=event.product_id,
                             price=float(event.price),
                             purchases=1,
                             views=0,
-                            revenue=float(event.price)
+                            revenue=float(event.price),
                         )
                     else:
                         dict_products[event.product_id].purchases += 1
@@ -62,19 +60,21 @@ class MetricsManager(metaclass=Singleton):
                 for event in events:
                     if event.user_id:
                         users_who_viewed.add(event.user_id)
-                    
+
                     if event.product_id not in dict_products:
                         dict_products[event.product_id] = ProductPopularity(
                             product_id=event.product_id,
                             price=float(event.price),
                             purchases=0,
                             views=1,
-                            revenue=0
+                            revenue=0,
                         )
                     else:
                         dict_products[event.product_id].views += 1
 
-        conversion_rate = self._calculate_conversion_rate(len(users_who_purchased), len(users_who_viewed))
+        conversion_rate = self._calculate_conversion_rate(
+            len(users_who_purchased), len(users_who_viewed)
+        )
         unique_users = users_who_purchased.union(users_who_viewed)
 
         top_products = [product for product in dict_products.values()]
@@ -85,11 +85,12 @@ class MetricsManager(metaclass=Singleton):
             conversion_rate=conversion_rate,
             purchases=purchases,
             unique_users=len(unique_users),
-            top_products=top_products
+            top_products=top_products,
         )
 
-
-    def _calculate_conversion_rate(self, number_users: int, number_products_viewed: int) -> float:
+    def _calculate_conversion_rate(
+        self, number_users: int, number_products_viewed: int
+    ) -> float:
         if number_products_viewed == 0 or number_users == 0:
             return 0
 

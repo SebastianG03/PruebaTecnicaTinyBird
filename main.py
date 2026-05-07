@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
     yield
     print("Application is shutting down...")
 
+
 def run_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     app.add_middleware(
@@ -29,8 +30,10 @@ def run_app() -> FastAPI:
 
     return app
 
+
 app = run_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000, workers=4)

@@ -1,10 +1,10 @@
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 import pycountry
 
 from app.entities.types.event_type import EventTypes
+
 
 class Events(BaseModel):
     event_id: str = Field(description="El id del evento")
@@ -19,18 +19,18 @@ class Events(BaseModel):
     def validate_timestamp(cls, value: str) -> str:
         if not value:
             raise ValueError("Timestamp no puede estar vacío")
-        
+
         formats = [
-                "%Y-%m-%dT%H:%M:%S",
-                "%Y-%m-%dT%H:%M:%SZ",
-                "%Y-%m-%dT%H:%M:%S%z",
-            ]
-        
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%H:%M:%SZ",
+            "%Y-%m-%dT%H:%M:%S%z",
+        ]
+
         for format in formats:
             try:
                 datetime.strptime(value, format)
                 return value
-            except:
+            except Exception:
                 pass
 
         raise ValueError("El formato de la fecha es incorrecto")
@@ -39,77 +39,82 @@ class Events(BaseModel):
     def validate_price(cls, value: float, info) -> float:
         if value < 0:
             raise ValueError("El precio no puede ser negativo")
-        
+
         event_type = info.data.get("event_type")
         if event_type == EventTypes.PURCHASE and value == 0:
             raise ValueError("El precio no puede ser 0 para un evento de compra")
 
         return value
-    
+
     @field_validator("event_id")
     def validate_event_id(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("El id no puede estar vacío")
-        
+
         if not value.startswith("evt_"):
             raise ValueError("El id debe comenzar con 'evt_'")
-        
+
         numeric_section = value.split("_")[1]
 
         if not numeric_section.isnumeric() or len(numeric_section) < 3:
-            raise ValueError("El id debe comenzar con 'evt_' seguido de un número de 3 o más dígitos")
+            raise ValueError(
+                "El id debe comenzar con 'evt_' seguido de un número de 3 o más dígitos"
+            )
 
         return value.strip()
-    
+
     @field_validator("user_id")
     def validate_user_id(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("El id no puede estar vacío")
-        
+
         if not value.startswith("u_"):
             raise ValueError("El id debe comenzar con 'u_'")
-        
+
         numeric_section = value.split("_")[1]
 
         if not numeric_section.isnumeric() or len(numeric_section) < 3:
-            raise ValueError("El id debe comenzar con 'u_' seguido de un número de 3 o más dígitos")
+            raise ValueError(
+                "El id debe comenzar con 'u_' seguido de un número de 3 o más dígitos"
+            )
 
         return value.strip()
-    
+
     @field_validator("product_id")
     def validate_product_id(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("El id no puede estar vacío")
-        
+
         if not value.startswith("p_"):
             raise ValueError("El id debe comenzar con 'p_'")
-        
+
         numeric_section = value.split("_")[1]
 
         if not numeric_section.isnumeric():
-            raise ValueError("El id debe comenzar con 'p_' seguido de un número de 1 o más dígitos")
+            raise ValueError(
+                "El id debe comenzar con 'p_' seguido de un número de 1 o más dígitos"
+            )
 
         return value.strip()
-    
+
     @field_validator("country")
     def validate_country(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("El código de país no puede estar vacío")
-        
+
         try:
-            country = pycountry.countries.lookup(value.upper().strip())
-        except:
+            pycountry.countries.lookup(value.upper().strip())
+        except Exception:
             raise ValueError("El código de país no es válido")
 
         return value.strip()
-
 
     @field_validator("event_type")
     def validate_event_type(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("El tipo de evento no puede estar vacío")
-        
-        if not value in EventTypes.__members__.values() or not value in EventTypes:
+
+        if value not in EventTypes.__members__.values() or value not in EventTypes:
             raise ValueError("El tipo de evento no es válido")
 
         return value
