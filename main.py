@@ -3,10 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logfire
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
+from app.api.v1.metrics_api import metrics_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,13 +23,17 @@ def run_app() -> FastAPI:
         allow_methods=["GET"],
         allow_headers=["*"],
     )
-    app.state.limiter = limiter
+    app.include_router(metrics_router)
+
     logfire.configure()
     logfire.instrument_fastapi(app)
+
     return app
+
 
 app = run_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000, workers=4)
