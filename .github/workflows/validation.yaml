@@ -11,7 +11,7 @@ env:
   APP_ENV: "development"
 
 jobs:
-  quality:
+  testing:
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
 
@@ -38,4 +38,4 @@ jobs:
 
       - name: Run Tests
         run: |
-          pytest tests
+          pytest test
