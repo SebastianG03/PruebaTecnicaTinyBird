@@ -8,6 +8,7 @@ dependencies = [
     "dynaconf>=3.2.13",
     "fastapi-cache2>=0.2.2",
     "fastapi[standard]>=0.136.1",
+    "ggshield>=1.50.3",
     "httpx>=0.28.1",
     "logfire[fastapi]>=4.32.1",
     "pycountry>=26.2.16",

@@ -1,3 +1,4 @@
+from pathlib import Path
 import traceback
 
 from fastapi_cache.decorator import cache
@@ -24,7 +25,7 @@ def health():
 @cache(expire=60)
 async def get_metrics(metrics_entry: MetricsEntry):
     try:
-        events = load_events()
+        events = load_events(Path("./data/events.json"))
 
         event_validator = EventValidator()
         events = event_validator.total_events(events, metrics_entry)
