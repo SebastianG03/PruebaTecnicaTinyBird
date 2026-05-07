@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Union
 
-from app.entites.models.events import Events
-from app.entites.interfaces.singleton import Singleton
+from app.entities.models.events import Events
+from app.entities.interfaces.singleton import Singleton
 
 
 class IMetrics(Singleton, ABCMeta):

@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from fastapi import Response
 
-from app.entites.types.response_type import TypeResponses
+from app.entities.types.response_type import TypeResponses
 
 class WebResponse():
 
