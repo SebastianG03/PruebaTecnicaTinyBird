@@ -1,19 +1,18 @@
 from datetime import datetime
-from re import L
+from decimal import Decimal
 
-from pydantic import field_validator
-from sqlmodel import SQLModel, Field
+from pydantic import BaseModel, Field, field_validator
 import pycountry
 
 from app.entities.types.event_type import EventTypes
 
-class Events(SQLModel, table=True):
-    event_id: str = Field(primary_key=True, index=True, unique=True, description="El id del evento")
-    user_id: str = Field(index=True, include="u_", regex="u_[0-9]+", description="El id del usuario")
-    event_type: EventTypes = Field(description="El tipo de evento")
-    product_id: str = Field(index=True, include="p_", regex="p_[0-9]+", description="El id del producto")
-    timestamp: str = Field(regex=r'^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)Z$', description="La fecha y hora del evento")
-    price: float = Field(decimal_places=2, ge=0, description="El precio del producto")
+class Events(BaseModel):
+    event_id: str = Field(description="El id del evento")
+    user_id: str = Field(description="El id del usuario")
+    event_type: str = Field(description="El tipo de evento")
+    product_id: str = Field(description="El id del producto")
+    timestamp: str = Field(description="La fecha y hora del evento")
+    price: float = Field(ge=0.00, description="El precio del producto")
     country: str = Field(min_length=2, description="Código ISO del país")
 
     @field_validator("timestamp")
@@ -21,51 +20,30 @@ class Events(SQLModel, table=True):
         if not value:
             raise ValueError("Timestamp no puede estar vacío")
         
-        timestamps = value.split("T")
+        formats = [
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%dT%H:%M:%SZ",
+                "%Y-%m-%dT%H:%M:%S%z",
+            ]
+        
+        for format in formats:
+            try:
+                datetime.strptime(value, format)
+                return value
+            except:
+                pass
 
-        if len(timestamps) != 2:
-            raise ValueError("El formato de la fecha es incorrecto")
-        
-        date = timestamps[0].split("-")
-
-        if len(date) != 3:
-            raise ValueError("El formato de la fecha es incorrecto")
-        
-        year, month, day = date[0].strip(), date[1].strip(), date[2].strip()
-        
-        if not year.isnumeric() or not month.isnumeric() or not day.isnumeric():
-            raise ValueError("El formato de la fecha es incorrecto")
-        
-        year, month, day = int(year), int(month), int(day)
-
-        try:
-            datetime(year, month, day)
-        except ValueError:
-            raise ValueError("El formato de la fecha es incorrecto")
-
-        time = timestamps[1].split(":")
-        
-        if len(time) != 3:
-            raise ValueError("El formato de la fecha es incorrecto")
-        
-        hour, minute, second = time[0].strip(), time[1].strip(), time[2].strip()
-        
-        if not hour.isnumeric() or not minute.isnumeric() or not second.isnumeric():
-            raise ValueError("El formato de la fecha es incorrecto")
-        
-        hour, minute, second = int(hour), int(minute), int(second)
-
-        try:
-            datetime(year, month, day, hour, minute, second)
-        except ValueError:
-            raise ValueError("El formato de la fecha es incorrecto")
-
-        return value.strip()
+        raise ValueError("El formato de la fecha es incorrecto")
 
     @field_validator("price")
-    def validate_price(cls, value: float) -> float:
+    def validate_price(cls, value: float, info) -> float:
         if value < 0:
             raise ValueError("El precio no puede ser negativo")
+        
+        event_type = info.data.get("event_type")
+        if event_type == EventTypes.PURCHASE and value == 0:
+            raise ValueError("El precio no puede ser 0 para un evento de compra")
+
         return value
     
     @field_validator("event_id")
@@ -131,7 +109,7 @@ class Events(SQLModel, table=True):
         if not value.strip():
             raise ValueError("El tipo de evento no puede estar vacío")
         
-        try:
-            return EventTypes(value.upper().strip())
-        except ValueError:
+        if value not in EventTypes:
             raise ValueError("El tipo de evento no es válido")
+
+        return value

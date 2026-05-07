@@ -1,7 +1,7 @@
+import json
 from typing import Any, Optional
-
 from fastapi import Response
-
+from fastapi.responses import JSONResponse
 from app.entities.types.response_type import TypeResponses
 
 class WebResponse():
@@ -14,12 +14,12 @@ class WebResponse():
         content: Optional[Any],
         http_code: int):
 
-        return Response(
+        return JSONResponse(
             status_code=http_code,
             content={
                 "type": type,
                 "message": messsage,
                 "title": title,
-                "data": content
+                "data": json.dumps(content)
             },
         )

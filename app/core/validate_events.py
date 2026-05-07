@@ -1,8 +1,8 @@
+from datetime import datetime
 import traceback
 from typing import Dict, List, Optional, Union
 
 from app.entities.interfaces.event_validator_interface import IEventValidator
-from app.entities.interfaces.singleton import Singleton
 from app.entities.models.events import Events
 
 import logfire
@@ -16,24 +16,26 @@ class EventValidator(IEventValidator):
 
     def total_events(self, events: List[Dict], metrics_entry: MetricsEntry):
         collected_events, error_collector, invalid_count = self.valid_events(events)
-        events_dict = [collected_event.model_dump() for collected_event in collected_events]
-
-        duplicated = self.duplicated_events(events_dict)
+        collected_events, duplicated = self.duplicated_events(collected_events)
 
         country, from_date, to_date = metrics_entry.country, metrics_entry.from_date, metrics_entry.to_date
 
-        if country:
+        if country is not None and country != "":
             collected_events = self.filter_events_by_country(collected_events, country)
+
+        try:
+            from_date = datetime.strptime(from_date, "%Y-%m-%dT%H:%M:%SZ") if from_date else None
+            to_date = datetime.strptime(to_date, "%Y-%m-%dT%H:%M:%SZ") if to_date else None
+        except:
+            logfire.error(traceback.format_exc())
+            from_date, to_date = None, None
 
         collected_events = self.filter_events_by_dates(collected_events, from_date, to_date)
         total = len(events)
+        logfire.info(f"Total events: {total}, duplicated events: {duplicated}, invalid events: {invalid_count}, errors: {len(error_collector)}")
+        logfire.info(f"Errors found on processing events: {error_collector}")
 
-        return MetricResponse(
-            total_events=total,
-            events=collected_events,
-            errors=error_collector,
-            invalid_events=invalid_count,
-            duplicated_events=duplicated)
+        return collected_events
 
     
     def valid_events(self, events: List[Dict]):
@@ -42,7 +44,7 @@ class EventValidator(IEventValidator):
         invalid_count = 0
         for event in events:
             try:
-                ev = Events.model_validate(**event)
+                ev = Events.model_validate(event)
                 collected_events.append(ev)
             except ValueError:
                 error = traceback.format_exc()
@@ -53,6 +55,6 @@ class EventValidator(IEventValidator):
 
         return collected_events, error_collector, invalid_count
     
-    def duplicated_events(self, events: List[Dict]):
+    def duplicated_events(self, events: List[Events]):
         return super().duplicated_events(events)
     

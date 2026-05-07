@@ -1,41 +1,71 @@
 
-from datetime import datetime
-from email import message
-from typing import List, Optional, Union
+import json
+import traceback
 
 from fastapi_cache.decorator import cache
 from fastapi import APIRouter
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+import logfire
 
+from app.core.metrics_manager import MetricsManager
 from app.core.utils import load_events
 from app.core.validate_events import EventValidator
-from app.entities.models.events import Events
 from app.entities.models.get_metrics import MetricsEntry
 from app.entities.models.web_response import WebResponse
 from app.entities.types.response_type import TypeResponses
-
-limiter = Limiter(key_func=get_remote_address)
 
 metrics_router = APIRouter(
     prefix="/metrics",
     tags=["metrics"]
 )
 
-@metrics_router.get("/")
+
+@metrics_router.get("/health")
+def health():
+    return {"status": "ok"}
+
+@metrics_router.post("/")
 @cache(expire=60)
-@limiter.limit("500/minute")
 async def get_metrics(metrics_entry: MetricsEntry):
-    events = load_events()
+    try:
+        events = load_events()
 
-    event_validator = EventValidator()
-    response = event_validator.total_events(events, metrics_entry)
+        event_validator = EventValidator()
+        events = event_validator.total_events(events, metrics_entry)
+        events_dict = [event.model_dump() for event in events]
+        metrics = MetricsManager().calculate_metrics(events)
 
-    return WebResponse.response(
-        type=TypeResponses.SUCCESS,
-        title="Métricas",
-        messsage="Métricas obtenidas conéxito",
-        content=response.model_dump_json(),
-        http_code=200
-    )
+        return WebResponse.response(
+            type=TypeResponses.SUCCESS,
+            title="Métricas",
+            messsage="Métricas obtenidas con éxito",
+            content=metrics.model_dump(),
+            http_code=200
+        )
+    except ValueError as e:
+        logfire.error(traceback.format_exc())
+        return WebResponse.response(
+            type=TypeResponses.ERROR,
+            title="Error",
+            messsage=str(e),
+            content=None,
+            http_code=400
+        )
+    except FileNotFoundError as de:
+        logfire.error(traceback.format_exc())
+        return WebResponse.response(
+            type=TypeResponses.ERROR,
+            title="Error",
+            messsage=str(de),
+            content=None,
+            http_code=400
+        )
+    except Exception as e:
+        logfire.error(traceback.format_exc())
+        return WebResponse.response(
+            type=TypeResponses.ERROR,
+            title="Error",
+            messsage=str(e),
+            content=None,
+            http_code=500
+        )

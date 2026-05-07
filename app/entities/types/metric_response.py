@@ -1,13 +1,13 @@
 
 from typing import List
-
 from pydantic import BaseModel
-
 from app.entities.models.events import Events
+from app.entities.models.product import ProductPopularity
 
 class MetricResponse(BaseModel):
-    total_events: int
-    events: List[Events]
-    errors: List[str]
-    invalid_events: int
-    duplicated_events: int
+    total_revenue: float
+    purchases: int
+    unique_users: int
+    conversion_rate: float
+    top_products: List[ProductPopularity]
+

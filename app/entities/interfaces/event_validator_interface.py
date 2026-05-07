@@ -1,20 +1,19 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 from app.entities.models.events import Events
-from app.entities.interfaces.singleton import Singleton
+from app.entities.interfaces.singleton import AbstractSingleton
 from app.entities.models.get_metrics import MetricsEntry
-from app.entities.types.metric_response import MetricResponse
 
 
-class IEventValidator(Singleton, ABCMeta):
+class IEventValidator(metaclass=AbstractSingleton):
 
     def __init__(self):
         pass
 
     @abstractmethod
-    def total_events(self, events: List[Dict], metrics_entry: MetricsEntry) -> MetricResponse:
+    def total_events(self, events: List[Dict], metrics_entry: MetricsEntry) -> List[Events]:
         pass
 
     @abstractmethod
@@ -23,11 +22,13 @@ class IEventValidator(Singleton, ABCMeta):
         pass
 
     @abstractmethod
-    def duplicated_events(self, events: List[Dict]):
+    def duplicated_events(self, events: List[Events]) -> Tuple[List[Events], int]:
         registered_events = set()
+        unique_events = []
         duplicated = 0
+
         for event in events:
-            event_id = event.get('event_id', "")
+            event_id = event.event_id
 
             if event_id == "":
                 continue
@@ -36,8 +37,9 @@ class IEventValidator(Singleton, ABCMeta):
                 duplicated += 1
             else:
                 registered_events.add(event_id)
+                unique_events.append(event)
 
-        return duplicated
+        return unique_events, duplicated
 
     def filter_events_by_country(self, events: List[Events], country_code: str):
         country_code = country_code.upper().strip()
