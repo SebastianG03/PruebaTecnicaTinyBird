@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 from typing import Dict, List
-from app.config.configuration import settings
 
 
 def load_events(path: Path) -> List[Dict]:
