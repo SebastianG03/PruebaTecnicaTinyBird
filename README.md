@@ -1,6 +1,16 @@
 # Prueba técnica - API de métricas de eventos
 Este proyecto expone una API construida con FastAPI para procesar eventos de productos y calcular métricas de negocio como ingresos, tasa de conversión, usuarios únicos y productos más populares.
 
+## Preguntas
+1. Cómo modelar en Tinybird
+El modelado en Tinybird se base en la estructuración de datos crudos y luego transformarlos para crear vistas materializadas. Los datos provendrán de diferentes fuentes de datos definidas en el proyecto y se procesarán mediante pipes.
+2. Qué pipes crear
+Para la prueba actual crearía un pipe para filtrar los eventos en base a los filtros definidos, en este caso por código de país y fecha. Además, crearía un pipe para analizar, validar y trasnformar la información de los eventos. 
+3. Cómo evitar duplicados
+Existen varios métodos para deduplicar, pero considerando que los eventos pueden ser recibidos en masa, eligiría el más eficiente y confiable a largo plazo. Implementaría ReplacingMergeTree para deduplicar y evitar afectar la eficiencia del proceso. También consideraría utilizar funciones lambda en casoo de ser necesario.
+4. Cómo escalar 
+Antes de escalar, revisaría cuál es el estado actual de la arquitectura y los recursos disponibles. Revisaría los logs, registros y documentación disponibles en los que se detallen el uso periódico de recursos y crearía un plan con el fin de revisar, planificar y optimizar los procesos, modificando la lógica de las querys, generando vistas dónde sea necesario, etc. Después de verificar que no se puede optimizar más el proceso actual escalaría verticalmente ampliando los recursos disponibles.
+
 ## Arquitectura del proyecto
 La solución está organizada con una arquitectura por capas para separar responsabilidades:
 
