@@ -24,7 +24,10 @@ metrics_router = APIRouter(
 def health():
     return {"status": "ok"}
 
-@metrics_router.post("/")
+@metrics_router.post(
+        "/",
+        status_code=200
+        )
 @cache(expire=60)
 async def get_metrics(metrics_entry: MetricsEntry):
     try:
@@ -32,7 +35,6 @@ async def get_metrics(metrics_entry: MetricsEntry):
 
         event_validator = EventValidator()
         events = event_validator.total_events(events, metrics_entry)
-        events_dict = [event.model_dump() for event in events]
         metrics = MetricsManager().calculate_metrics(events)
 
         return WebResponse.response(

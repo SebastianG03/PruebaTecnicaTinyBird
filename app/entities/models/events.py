@@ -109,7 +109,7 @@ class Events(BaseModel):
         if not value.strip():
             raise ValueError("El tipo de evento no puede estar vacío")
         
-        if value not in EventTypes:
+        if not value in EventTypes.__members__.values() or not value in EventTypes:
             raise ValueError("El tipo de evento no es válido")
 
         return value

@@ -8,7 +8,7 @@ from app.entities.types.metric_response import MetricResponse
 
 
 class MetricsManager(metaclass=Singleton):
-    def group_by_event_type(self, events: List[Events]):
+    def group_by_event_type(self, events: List[Events]) -> Dict[str, List[Events]]:
         grouped_events = {}
 
         for event in events:

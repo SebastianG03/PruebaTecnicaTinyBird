@@ -20,6 +20,6 @@ class WebResponse():
                 "type": type,
                 "message": messsage,
                 "title": title,
-                "data": json.dumps(content)
+                "data": content
             },
         )
